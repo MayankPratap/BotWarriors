@@ -8,6 +8,8 @@ int p;
 
 vector<vector<int> >arena(12,vector<int>(12));
 
+//  pos stores the current positions of amazons to easily generate moves when needed
+//  Otherwise while generating moves we have to traverse the matrix to find the amazons and then check moves.
 int pos[2][4][2];  // pos[player][amazon][iorjcoordinate]
                    // 0 for i coordinate 1 for j coordinate
 
@@ -25,6 +27,7 @@ struct move{
                // first i direction then j (i,j) pairs
 int dir[8][2]={-1,-1,-1,0,-1,1,0,1,1,1,1,0,1,-1,0,-1};
 
+/*
 int evaluateArena(vector<vector<int> >arena){
 
 
@@ -32,7 +35,12 @@ int evaluateArena(vector<vector<int> >arena){
 
 }
 
+*/
+
+// Time Complexity O(3*8*12*8*12)=O(27648)
+
 vector<move> generateMoves(vector<vector<int> >arena,int p){
+
 
     vector<move>possibleMoves;
 
@@ -85,6 +93,8 @@ vector<move> generateMoves(vector<vector<int> >arena,int p){
 
 }
 
+// Time Complexity :- O(144+3*8)=O(168)
+
 vector<vector<int> > makeMove(vector<vector<int> >arena,move newMove,int p){
 
     vector<vector<int> >newArena(12,vector<int>(12));
@@ -108,14 +118,49 @@ vector<vector<int> > makeMove(vector<vector<int> >arena,move newMove,int p){
 
     for(int s=0;s<=3;++s){
 
+        if(pos[p][s][0]==si && pos[p][s][1]==sj){  // we want to move amazon s
+
+            pos[p][s][0]=di;   // current destination will become source for furthur opertations
+            pos[p][s][1]=dj;
+
+            newArena[si][sj]=0;
+            newArena[di][dj]=p+1;  // blue or red by 1 or 2
+
+            if(newArena[ari][arj]==5){  // If arrow lands on a bomb
+
+                newArena[ari][arj]=0;  // Clear the square where bomb resides
+                int bombi,bombj;
+
+                // Clearing the nearby 8 squares
+
+                for(int i=0;i<8;++i){
+
+                    if(newArena[ari+1*dir[i][0]][arj+1*dir[i][1]]==-1)
+                        newArena[ari+1*dir[i][0]][arj+1*dir[i][1]]=0;
+                }
+
+            }
+
+            else{
+
+                newArena[ari][arj]=-1;
+            }
+
+            break;
+
+        }
 
 
     }
+
+    return newArena;
 
 }
 
 
 int main(){
+
+    memset(pos,0,sizeof(pos));
 
     cin>>p;  // p take as 1 or 2
     p=p-1;  // reduce p so that we can easily move between 0 and 1
@@ -128,6 +173,7 @@ int main(){
         5  -- square contains a bomb
         0  -- empty square
     */
+
 
     int cnt1=0,cnt2=0;  // cnt1 for blue amazon cnt2 for red amazon
 
@@ -147,11 +193,14 @@ int main(){
       }
     }
 
+    cout<<"\n\n";
+
+
     // arena gives board state and p gives turn(which player)
 
     vector<move> possibleMoves=generateMoves(arena,p);
 
-    move bestMove=NULL;
+    move bestMove;
     int bestValue=-10000;
 
     //  Player p will act as maximising player and opposite player will be minimising player
@@ -162,16 +211,19 @@ int main(){
 
     vector<vector<int> >newArena(12,vector<int>(12));
 
+    // Arena does not change while trying to make possible moves
+    // We do changes on a copy of arena and return a new Arena
+
     for(int i=0;i<possibleMoves.size();++i){
 
         move newMove=possibleMoves[i];
-        int temp[2][4][2];  // An array will store a 2D
+        int temp[2][4][2];  // An array that keeps copy of pos
+                            // Latter used to undo
         memcpy(temp,pos,sizeof pos);
         newArena=makeMove(arena,newMove,p); // I am sending a copy of arena and returning a new 2 D vector
 
 
     }
-
 
 
 
