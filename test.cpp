@@ -4,7 +4,7 @@ using namespace std;
 #define pb push_back
 #define mp make_pair
 
-int p;
+int p;   // Denotes which player - blue or red
 
 vector<vector<int> >arena(12,vector<int>(12));
 
@@ -27,15 +27,67 @@ struct move{
                // first i direction then j (i,j) pairs
 int dir[8][2]={-1,-1,-1,0,-1,1,0,1,1,1,1,0,1,-1,0,-1};
 
-/*
 int evaluateArena(vector<vector<int> >arena){
 
+    // Maximising player will have positive score attached
+    // Minimising player will have negative score attached
+
+    // I am using sum of degree of freedom of each amazon
+
+    int sum1=0;  // sum of degree of freedom for amazons of maximising player
+    int sum2=0;  // sum of degree of freedom for amazons of minimising player
+
+    // degree of freedom here means number of squares available to an amazon to move
+    for(int s=0;s<=3;++s){
+
+        int si=pos[p][s][0]; // i coordinate
+        int sj=pos[p][s][1];  // j coordinate
+
+        int di,dj;
+
+        for(int j=0;j<8;++j){  // an amazon can move in any of the 8 directions
+
+            int x;
+            for(x=1; ;x++){
+
+                di=si+x*dir[j][0],dj=sj+x*dir[j][1];
+                if(di<0 || di>11 || dj<0 || dj>11 || arena[di][dj]!=0) break;
+
+            }
+
+            sum1+=x-1;
+
+        }
+
+    }
+
+    for(int s=0;s<=3;++s){
+
+        int si=pos[!p][s][0]; // i coordinate
+        int sj=pos[!p][s][1];  // j coordinate
+
+        int di,dj;
+
+        for(int j=0;j<8;++j){
+
+            int x;
+            for(x=1; ;x++){
+
+                di=si+x*dir[j][0],dj=sj+x*dir[j][1];
+                if(di<0 || di>11 || dj<0 || dj>11 || arena[di][dj]!=0) break;
+
+            }
+
+            sum2+=x-1;
 
 
+        }
 
+    }
+
+    return sum1-sum2;
 }
 
-*/
 
 // Time Complexity O(3*8*12*8*12)=O(27648)
 
@@ -157,6 +209,65 @@ vector<vector<int> > makeMove(vector<vector<int> >arena,move newMove,int p){
 
 }
 
+int minimax(int depth,vector<vector<int> >arena,bool isMaximisingPlayer){
+    vector<vector<int> >newArena;
+
+    if(depth==0){
+
+        cout<<"Leaf node of minimax tree\n";
+        int val=evaluateArena(arena);
+
+        return val;
+    }
+
+
+    if(isMaximisingPlayer){
+        cout<<"depth: "<<depth<<"\n";
+        vector<move> possibleMoves=generateMoves(arena,p);
+        int bestValue=-1500;
+        cout<<"No of possible moves: ";
+        cout<<possibleMoves.size()<<"\n";
+
+        for(int i=0;i<possibleMoves.size();++i){
+
+            move newMove=possibleMoves[i];
+            int temp[2][4][2];  // An array that keeps copy of pos
+                                // Latter used to undo
+            memcpy(temp,pos,sizeof pos);
+            newArena=makeMove(arena,newMove,p);
+            bestValue=max(bestValue,minimax(depth-1,newArena,!isMaximisingPlayer));
+            memcpy(pos,temp,sizeof temp);   // Now I am undoing my deeds
+
+        }
+
+      
+        return bestValue;
+
+    }
+    else{
+        cout<<"depth: "<<depth<<"\n";
+        cout<<"Minimising player\n";
+        vector<move> possibleMoves=generateMoves(arena,!p);
+        int bestValue=1500;
+        cout<<"No of possible moves: ";
+        cout<<possibleMoves.size()<<"\n";
+
+        for(int i=0;i<possibleMoves.size();++i){
+
+            move newMove=possibleMoves[i];
+            int temp[2][4][2];
+            memcpy(temp,pos,sizeof pos);
+            newArena=makeMove(arena,newMove,!p);
+            bestValue=min(bestValue,minimax(depth-1,newArena,!isMaximisingPlayer));
+
+            memcpy(pos,temp,sizeof temp);  // undoing
+        }
+
+        return bestValue;
+
+    }
+
+}
 
 int main(){
 
@@ -193,7 +304,19 @@ int main(){
       }
     }
 
-    cout<<"\n\n";
+    cout<<"\n";
+
+    for(int i=0;i<12;++i){
+
+        for(int j=0;j<12;++j){
+
+            cout<<arena[i][j]<<" ";
+
+        }
+
+        cout<<"\n";
+
+    }
 
 
     // arena gives board state and p gives turn(which player)
@@ -201,7 +324,7 @@ int main(){
     vector<move> possibleMoves=generateMoves(arena,p);
 
     move bestMove;
-    int bestValue=-10000;
+    int bestValue=-1500;
 
     //  Player p will act as maximising player and opposite player will be minimising player
 
@@ -222,13 +345,30 @@ int main(){
         memcpy(temp,pos,sizeof pos);
         newArena=makeMove(arena,newMove,p); // I am sending a copy of arena and returning a new 2 D vector
 
+        int arenaValue=minimax(2,newArena,false);
+
+      //  cout<<"Ek minimax complete\n";
+
+        memcpy(pos,temp,sizeof temp);   // Now I am undoing my deeds
+
+        if(arenaValue>=bestValue){
+
+            bestValue=arenaValue;
+            bestMove=newMove;
+        }
+
 
     }
 
 
 
-
-
+    cout<<(char)('A'+bestMove.si);
+    cout<<(char)('A'+bestMove.sj);
+    cout<<(char)('A'+bestMove.di);
+    cout<<(char)('A'+bestMove.dj);
+    cout<<(char)('A'+bestMove.ari);
+    cout<<(char)('A'+bestMove.arj);
+    cout<<"\n";
 
 
     return 0;
