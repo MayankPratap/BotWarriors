@@ -27,6 +27,8 @@ struct move{
                // first i direction then j (i,j) pairs
 int dir[8][2]={-1,-1,-1,0,-1,1,0,1,1,1,1,0,1,-1,0,-1};
 
+//  Time complexity of evaluating arena :- O(4*8*12)=O(32*12)=O(~400) operations
+
 int evaluateArena(vector<vector<int> >arena){
 
     // Maximising player will have positive score attached
@@ -89,13 +91,11 @@ int evaluateArena(vector<vector<int> >arena){
 }
 
 
-// Time Complexity O(3*8*12*8*12)=O(27648)
+// Time Complexity O(4*8*12*8*12)=O(36864)
 
 vector<move> generateMoves(vector<vector<int> >arena,int p){
 
-
     vector<move>possibleMoves;
-
     move moveTemp;
 
     // source,destination,destination of arrow
@@ -132,6 +132,12 @@ vector<move> generateMoves(vector<vector<int> >arena,int p){
 
                         possibleMoves.pb(moveTemp);
 
+                        if(arena[ari][arj]==5){
+
+                            break;
+
+                        }
+
                     }
                 }
 
@@ -145,7 +151,7 @@ vector<move> generateMoves(vector<vector<int> >arena,int p){
 
 }
 
-// Time Complexity :- O(144+3*8)=O(168)
+// Time Complexity :- O(144+4*8)=O(176)
 
 vector<vector<int> > makeMove(vector<vector<int> >arena,move newMove,int p){
 
@@ -209,24 +215,56 @@ vector<vector<int> > makeMove(vector<vector<int> >arena,move newMove,int p){
 
 }
 
-int minimax(int depth,vector<vector<int> >arena,bool isMaximisingPlayer){
+int minimax(int depth,vector<vector<int> >arena,int alpha,int beta,bool isMaximisingPlayer){
     vector<vector<int> >newArena;
 
     if(depth==0){
 
-        cout<<"Leaf node of minimax tree\n";
         int val=evaluateArena(arena);
-
+        //cout<<"Arena evaluation: "<<val<<"\n";
         return val;
     }
 
 
     if(isMaximisingPlayer){
-        cout<<"depth: "<<depth<<"\n";
+      //  cout<<"depth: "<<depth<<"\n";
+      //  cout<<"Maximising player\n";
         vector<move> possibleMoves=generateMoves(arena,p);
-        int bestValue=-1500;
-        cout<<"No of possible moves: ";
-        cout<<possibleMoves.size()<<"\n";
+        int bestValue=-1000;
+      //  cout<<"No of possible moves: ";
+      //  cout<<possibleMoves.size()<<"\n";
+      int d;   // depth will be varied according to no of possible moves available
+
+      if((int)possibleMoves.size()<=50){
+
+          d=min(2,depth-1);
+
+      }
+
+      else if((int)possibleMoves.size()>50 && (int)possibleMoves.size()<=200){
+
+          d=min(1,depth-1);
+
+      }
+
+    /*  else if((int)possibleMoves.size()>80 && (int)possibleMoves.size()<=300){
+
+          d=min(1,depth-1);
+
+      }
+/*
+      else if((int)possibleMoves.size()>110 && (int)possibleMoves.size()<=300){
+
+          d=min(1,depth-1);
+
+      }  */
+
+      else{
+
+        d=0;
+
+      }
+
 
         for(int i=0;i<possibleMoves.size();++i){
 
@@ -235,22 +273,61 @@ int minimax(int depth,vector<vector<int> >arena,bool isMaximisingPlayer){
                                 // Latter used to undo
             memcpy(temp,pos,sizeof pos);
             newArena=makeMove(arena,newMove,p);
-            bestValue=max(bestValue,minimax(depth-1,newArena,!isMaximisingPlayer));
+            bestValue=max(bestValue,minimax(d,newArena,alpha,beta,!isMaximisingPlayer));
             memcpy(pos,temp,sizeof temp);   // Now I am undoing my deeds
+            alpha=max(alpha,bestValue);
+
+            if(alpha>=beta){
+
+                return bestValue;
+
+            }
 
         }
 
-      
         return bestValue;
 
     }
     else{
-        cout<<"depth: "<<depth<<"\n";
-        cout<<"Minimising player\n";
+      //  cout<<"depth: "<<depth<<"\n";
+      //  cout<<"Minimising player\n";
         vector<move> possibleMoves=generateMoves(arena,!p);
-        int bestValue=1500;
-        cout<<"No of possible moves: ";
-        cout<<possibleMoves.size()<<"\n";
+        int bestValue=1000;
+      //  cout<<"No of possible moves: ";
+      //  cout<<possibleMoves.size()<<"\n";
+        int d;   // depth will be varied according to no of possible moves available
+
+        if((int)possibleMoves.size()<=50){
+
+            d=min(2,depth-1);
+
+        }
+
+        else if((int)possibleMoves.size()>50 && (int)possibleMoves.size()<=200){
+
+            d=min(1,depth-1);
+
+        }
+/*
+        else if((int)possibleMoves.size()>80 && (int)possibleMoves.size()<=300){
+
+          d=min(1,depth-1);
+
+        }
+
+        /*
+
+        else if((int)possibleMoves.size()>110 && (int)possibleMoves.size()<=300){
+
+          d=min(1,depth-1);
+
+        }  */
+
+        else{
+
+          d=0;
+
+        }
 
         for(int i=0;i<possibleMoves.size();++i){
 
@@ -258,9 +335,14 @@ int minimax(int depth,vector<vector<int> >arena,bool isMaximisingPlayer){
             int temp[2][4][2];
             memcpy(temp,pos,sizeof pos);
             newArena=makeMove(arena,newMove,!p);
-            bestValue=min(bestValue,minimax(depth-1,newArena,!isMaximisingPlayer));
-
+            bestValue=min(bestValue,minimax(d,newArena,alpha,beta,!isMaximisingPlayer));
             memcpy(pos,temp,sizeof temp);  // undoing
+
+            beta=min(beta,bestValue);
+            if(beta<=alpha){   // If min value(beta) that minimising player has achieved till now is less than maximum value(alpha) that maximising player has achieved till now.
+                              // Then we not need to go to remaining children.
+                return bestValue;
+            }
         }
 
         return bestValue;
@@ -304,27 +386,30 @@ int main(){
       }
     }
 
-    cout<<"\n";
+    /*
 
     for(int i=0;i<12;++i){
-
         for(int j=0;j<12;++j){
 
             cout<<arena[i][j]<<" ";
 
+
         }
 
         cout<<"\n";
-
     }
 
+
+    */
 
     // arena gives board state and p gives turn(which player)
 
     vector<move> possibleMoves=generateMoves(arena,p);
 
+    //cout<<possibleMoves.size()<<"\n";
+
     move bestMove;
-    int bestValue=-1500;
+    int bestValue=-1000;
 
     //  Player p will act as maximising player and opposite player will be minimising player
 
@@ -337,6 +422,39 @@ int main(){
     // Arena does not change while trying to make possible moves
     // We do changes on a copy of arena and return a new Arena
 
+
+    int d;   // depth will be varied according to no of possible moves available
+
+    if((int)possibleMoves.size()<=50){
+
+        d=2;
+
+    }
+
+    else if((int)possibleMoves.size()>50 && (int)possibleMoves.size()<=200){
+
+        d=1;
+
+    }
+
+  /*  else if((int)possibleMoves.size()>80 && (int)possibleMoves.size()<=300){
+
+        d=1;
+
+    }
+
+  /*  else if((int)possibleMoves.size()>110 && (int)possibleMoves.size()<=300){
+
+        d=1;
+
+    }  */
+
+    else{
+
+      d=0;
+
+    }
+
     for(int i=0;i<possibleMoves.size();++i){
 
         move newMove=possibleMoves[i];
@@ -345,9 +463,7 @@ int main(){
         memcpy(temp,pos,sizeof pos);
         newArena=makeMove(arena,newMove,p); // I am sending a copy of arena and returning a new 2 D vector
 
-        int arenaValue=minimax(2,newArena,false);
-
-      //  cout<<"Ek minimax complete\n";
+        int arenaValue=minimax(d,newArena,-1000,1000,false);
 
         memcpy(pos,temp,sizeof temp);   // Now I am undoing my deeds
 
@@ -369,6 +485,8 @@ int main(){
     cout<<(char)('A'+bestMove.ari);
     cout<<(char)('A'+bestMove.arj);
     cout<<"\n";
+
+
 
 
     return 0;
