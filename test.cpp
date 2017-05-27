@@ -29,6 +29,8 @@ int dir[8][2]={-1,-1,-1,0,-1,1,0,1,1,1,1,0,1,-1,0,-1};
 
 //  Time complexity of evaluating arena :- O(4*8*12)=O(32*12)=O(~400) operations
 
+int weights[4]={110,105,95,85};
+
 int evaluateArena(vector<vector<int> >arena){
 
     // Maximising player will have positive score attached
@@ -44,21 +46,22 @@ int evaluateArena(vector<vector<int> >arena){
 
         int si=pos[p][s][0]; // i coordinate
         int sj=pos[p][s][1];  // j coordinate
-
         int di,dj;
-
         for(int j=0;j<8;++j){  // an amazon can move in any of the 8 directions
-
             int x;
             for(x=1; ;x++){
-
                 di=si+x*dir[j][0],dj=sj+x*dir[j][1];
                 if(di<0 || di>11 || dj<0 || dj>11 || arena[di][dj]!=0) break;
-
+                if(x<=3)
+                    sum1+=weights[3];
+                else if(x<=6)
+                    sum1+=weights[2];
+                else if(x<=9)
+                    sum1+=weights[1];
+                else if(x<=12)
+                    sum1+=weights[0];
             }
-
-            sum1+=x-1;
-
+        //    sum1+=x-1;
         }
 
     }
@@ -77,12 +80,17 @@ int evaluateArena(vector<vector<int> >arena){
 
                 di=si+x*dir[j][0],dj=sj+x*dir[j][1];
                 if(di<0 || di>11 || dj<0 || dj>11 || arena[di][dj]!=0) break;
-
+                if(x<=3)
+                    sum2+=weights[3];
+                else if(x<=6)
+                    sum2+=weights[2];
+                else if(x<=9)
+                    sum2+=weights[1];
+                else if(x<=12)
+                    sum2+=weights[0];
             }
 
-            sum2+=x-1;
-
-
+            //sum2+=x-1;
         }
 
     }
